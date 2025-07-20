@@ -10,6 +10,7 @@ const users = require('./routes/users');
 const sensorData = require('./routes/sensorData');
 const login = require('./routes/login');
 
+
 console.log("Mongo URI:", process.env.MONGODB_URI);
 
 mongoose.connect(process.env.MONGODB_URI)
@@ -19,7 +20,7 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use(cors());
 app.use(express.json());
 
-app.use('/', auth);
+app.use('/auth', auth)
 app.use('/users', users);
 app.use('/sensor-data', sensorData);
 app.use('/login', login);

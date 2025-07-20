@@ -1,11 +1,11 @@
 const express = require('express');
-//const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken'); // <-- Agrega esto
 const bcrypt = require('bcrypt');
 const User = require('../models/user');
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  let { telefono, correo, contrasena } = req.body;
+  let { telefono, correo, contrasena, recordar } = req.body; // <-- Agrega "recordar"
   console.log('Datos recibidos:', req.body);
 
   // Normalizar correo a minúsculas
@@ -51,13 +51,18 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Generar el token (comentado por ahora)
-    {/** const token = jwt.sign(
-      { id: user._id, email: user.correo },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-    */}
+    // --- Generar el JWT ---
+    const payload = {
+      id: user._id,
+      email: user.correo
+    };
+
+    // Si recordar está en true, el token dura 14 días, si no, 1 hora
+    const expiresIn = recordar ? '14d' : '1h';
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
+
+    // Mostrar el JWT generado en la consola del API
+    console.log("JWT generado:", token);
 
     // Preparar respuesta sin incluir la contraseña
     const userResponse = {
@@ -75,7 +80,9 @@ router.post('/', async (req, res) => {
 
     res.status(200).json({ 
       message: 'Inicio de sesión exitoso', 
-      user: userResponse
+      user: userResponse,
+      token, // <-- Devuelve el token
+      tokenType: recordar ? 'extendido' : 'temporal'
     });
   } catch (err) {
     console.error('Error en /login:', err);
