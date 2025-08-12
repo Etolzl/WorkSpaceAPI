@@ -54,6 +54,11 @@ const UserSchema = new mongoose.Schema({
     minlength: [6, 'La contraseña debe tener al menos 6 caracteres'],
     select: false // No incluir la contraseña en las consultas por defecto
   },
+  rol: {
+    type: String,
+    enum: ['usuario', 'admin'],
+    default: 'usuario'
+  },
   fechaCreacion: {
     type: Date,
     default: Date.now

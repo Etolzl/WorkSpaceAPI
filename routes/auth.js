@@ -13,7 +13,12 @@ router.get('/me', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     const user = await User.findById(decoded.id)
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" })
-    res.json({ user: user.toJSON() })
+    
+    // Incluir el rol del usuario en la respuesta
+    const userData = user.toJSON()
+    userData.rol = decoded.rol // Usar el rol del JWT para mayor seguridad
+    
+    res.json({ user: userData })
   } catch (e) {
     res.status(401).json({ error: "Token inválido" })
   }

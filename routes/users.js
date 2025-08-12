@@ -226,8 +226,22 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Generar JWT con el rol del usuario
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { 
+        id: usuario._id, 
+        rol: usuario.rol || 'usuario',
+        nombre: usuario.nombre,
+        apellido: usuario.apellido
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '24h' }
+    );
+
     res.status(200).json({
       message: 'Inicio de sesión exitoso',
+      token,
       usuario: {
         id: usuario._id,
         nombre: usuario.nombre,
@@ -236,7 +250,8 @@ router.post('/login', async (req, res) => {
         telefono: usuario.telefono,
         fechaCumpleanos: usuario.fechaCumpleanos,
         edad: usuario.obtenerEdad(),
-        nombreCompleto: usuario.obtenerNombreCompleto()
+        nombreCompleto: usuario.obtenerNombreCompleto(),
+        rol: usuario.rol || 'usuario'
       }
     });
 
