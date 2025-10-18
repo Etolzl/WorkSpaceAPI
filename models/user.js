@@ -7,14 +7,28 @@ const UserSchema = new mongoose.Schema({
     required: [true, 'El nombre es requerido'],
     trim: true,
     minlength: [2, 'El nombre debe tener al menos 2 caracteres'],
-    maxlength: [50, 'El nombre no puede exceder 50 caracteres']
+    maxlength: [50, 'El nombre no puede exceder 50 caracteres'],
+    validate: {
+      validator: function(name) {
+        // Validar que solo contenga letras, espacios y algunos caracteres especiales
+        return /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-']+$/.test(name);
+      },
+      message: 'El nombre solo puede contener letras, espacios, guiones y apostrofes'
+    }
   },
   apellido: {
     type: String,
     required: [true, 'El apellido es requerido'],
     trim: true,
     minlength: [2, 'El apellido debe tener al menos 2 caracteres'],
-    maxlength: [50, 'El apellido no puede exceder 50 caracteres']
+    maxlength: [50, 'El apellido no puede exceder 50 caracteres'],
+    validate: {
+      validator: function(lastName) {
+        // Validar que solo contenga letras, espacios y algunos caracteres especiales
+        return /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-']+$/.test(lastName);
+      },
+      message: 'El apellido solo puede contener letras, espacios, guiones y apostrofes'
+    }
   },
   correo: {
     type: String,
@@ -52,6 +66,15 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: [true, 'La contraseña es requerida'],
     minlength: [6, 'La contraseña debe tener al menos 6 caracteres'],
+    maxlength: [128, 'La contraseña no puede exceder 128 caracteres'],
+    validate: {
+      validator: function(password) {
+        // Validar que no contenga espacios ni caracteres peligrosos
+        return !password.includes(' ') && 
+               !/<script|javascript:|on\w+=/gi.test(password);
+      },
+      message: 'La contraseña contiene caracteres no permitidos'
+    },
     select: false // No incluir la contraseña en las consultas por defecto
   },
   rol: {

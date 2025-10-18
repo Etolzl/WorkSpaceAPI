@@ -1,32 +1,19 @@
 const express = require('express');
-const jwt = require('jsonwebtoken'); // <-- Agrega esto
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../models/user');
+const { validateLogin } = require('../middleware/validation');
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-  let { telefono, correo, contrasena, recordar } = req.body; // <-- Agrega "recordar"
-  console.log('Datos recibidos:', req.body);
-
-  // Normalizar correo a minúsculas
-  if (correo) correo = correo.toLowerCase();
-
-  // Validar que se proporcione la contraseña
-  if (!contrasena) {
-    return res.status(400).json({ 
-      error: 'La contraseña es requerida' 
-    });
-  }
-
+router.post('/', validateLogin, async (req, res) => {
   try {
+    const { telefono, correo, contrasena, recordar } = req.body;
+
+    // Buscar usuario
     let user;
     const filter = [];
     if (telefono) filter.push({ telefono });
     if (correo) filter.push({ correo });
-
-    if (filter.length === 0) {
-      return res.status(400).json({ error: 'Debes proporcionar correo o teléfono' });
-    }
 
     user = await User.findOne({ $or: filter }).select('+contrasena');
 
@@ -61,8 +48,8 @@ router.post('/', async (req, res) => {
     const expiresIn = recordar ? '14d' : '1h';
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 
-    // Mostrar el JWT generado en la consola del API
-    console.log("JWT generado:", token);
+    // Log de seguridad (sin mostrar el token completo)
+    console.log("JWT generado para usuario:", user.correo, "expira en:", expiresIn);
 
     // Preparar respuesta sin incluir la contraseña
     const userResponse = {
@@ -81,11 +68,11 @@ router.post('/', async (req, res) => {
     res.status(200).json({ 
       message: 'Inicio de sesión exitoso', 
       user: userResponse,
-      token, // <-- Devuelve el token
+      token,
       tokenType: recordar ? 'extendido' : 'temporal'
     });
   } catch (err) {
-    console.error('Error en /login:', err);
+    console.error('Error en /login:', err.message);
     res.status(500).json({ 
       error: 'Error interno del servidor durante el inicio de sesión' 
     });
