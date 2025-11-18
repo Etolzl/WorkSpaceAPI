@@ -87,7 +87,8 @@ const auth = require('./routes/auth');
 const users = require('./routes/users');
 const sensorData = require('./routes/sensorData');
 const login = require('./routes/login');
-const entornosRouter = require('./routes/entornos')
+const entornosRouter = require('./routes/entornos');
+const pushRouter = require('./routes/push');
 
 
 console.log("Mongo URI:", process.env.MONGODB_URI);
@@ -115,7 +116,8 @@ app.use('/auth', generalRateLimitMiddleware, auth)
 app.use('/users', generalRateLimitMiddleware, users);
 app.use('/sensor-data', generalRateLimitMiddleware, sensorData);
 app.use('/login', rateLimitMiddleware, login);
-app.use('/entornos', generalRateLimitMiddleware, entornosRouter)
+app.use('/entornos', generalRateLimitMiddleware, entornosRouter);
+app.use('/push', generalRateLimitMiddleware, pushRouter);
 
 // Iniciar servidor
 app.listen(PORT, '0.0.0.0', () => console.log(`Servidor escuchando en puerto ${PORT}`));

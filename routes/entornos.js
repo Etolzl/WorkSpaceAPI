@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const Entorno = require('../models/entorno')
-const { authenticateToken, requireAdmin } = require('../middleware/auth')
+const { authenticateToken, requireAdmin, requireOwnerOrAdmin } = require('../middleware/auth')
 const { validateEntorno, validateEstado, validateObjectId } = require('../middleware/validation')
 
 // Crear un nuevo entorno (requiere autenticación y validación)
@@ -62,8 +62,8 @@ router.patch('/cambiar-estado/:id', authenticateToken, validateObjectId, validat
   }
 })
 
-// Editar un entorno por ID (requiere autenticación, validación y permisos de admin)
-router.put('/editar/:id', authenticateToken, requireAdmin, validateObjectId, validateEntorno, async (req, res) => {
+// Editar un entorno por ID (requiere autenticación, validación y que el usuario sea el dueño o admin)
+router.put('/editar/:id', authenticateToken, requireOwnerOrAdmin, validateObjectId, validateEntorno, async (req, res) => {
   try {
     const entorno = await Entorno.findByIdAndUpdate(
       req.params.id,
@@ -79,7 +79,8 @@ router.put('/editar/:id', authenticateToken, requireAdmin, validateObjectId, val
       return res.status(404).json({ error: 'Entorno no encontrado' })
     }
     
-    console.log(`Entorno "${entorno.nombre}" editado por administrador: ${req.user.email}`)
+    const userType = req.user.rol === 'admin' ? 'administrador' : 'usuario'
+    console.log(`Entorno "${entorno.nombre}" editado por ${userType}: ${req.user.email}`)
     res.json(entorno)
   } catch (error) {
     console.error('Error editando entorno:', error.message)
@@ -87,8 +88,8 @@ router.put('/editar/:id', authenticateToken, requireAdmin, validateObjectId, val
   }
 })
 
-// Eliminar un entorno por ID (requiere autenticación, validación y permisos de admin)
-router.delete('/eliminar/:id', authenticateToken, requireAdmin, validateObjectId, async (req, res) => {
+// Eliminar un entorno por ID (requiere autenticación, validación y que el usuario sea el dueño o admin)
+router.delete('/eliminar/:id', authenticateToken, requireOwnerOrAdmin, validateObjectId, async (req, res) => {
   try {
     const entorno = await Entorno.findByIdAndDelete(req.params.id)
     
@@ -96,7 +97,8 @@ router.delete('/eliminar/:id', authenticateToken, requireAdmin, validateObjectId
       return res.status(404).json({ error: 'Entorno no encontrado' })
     }
     
-    console.log(`Entorno "${entorno.nombre}" eliminado por administrador: ${req.user.email}`)
+    const userType = req.user.rol === 'admin' ? 'administrador' : 'usuario'
+    console.log(`Entorno "${entorno.nombre}" eliminado por ${userType}: ${req.user.email}`)
     res.json({ 
       message: 'Entorno eliminado correctamente',
       entornoEliminado: {

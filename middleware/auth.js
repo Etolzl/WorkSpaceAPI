@@ -118,8 +118,66 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
+// Middleware para verificar que el usuario es el dueño del recurso o es administrador
+// Requiere que el modelo tenga un campo 'usuario' que sea ObjectId
+const requireOwnerOrAdmin = async (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ 
+      error: 'Autenticación requerida' 
+    });
+  }
+
+  // Si es administrador, permitir acceso
+  if (req.user.rol === 'admin') {
+    return next();
+  }
+
+  // Si no es admin, verificar que sea el dueño del recurso
+  // Necesitamos el modelo y el ID del recurso
+  const resourceId = req.params.id;
+  
+  if (!resourceId) {
+    return res.status(400).json({ 
+      error: 'ID del recurso requerido' 
+    });
+  }
+
+  try {
+    // Importar el modelo de Entorno dinámicamente para evitar dependencias circulares
+    const Entorno = require('../models/entorno');
+    
+    const entorno = await Entorno.findById(resourceId);
+    
+    if (!entorno) {
+      return res.status(404).json({ 
+        error: 'Entorno no encontrado' 
+      });
+    }
+
+    // Convertir ambos IDs a string para comparar
+    const userId = req.user.id.toString();
+    const entornoUsuarioId = entorno.usuario.toString();
+
+    // Verificar que el usuario es el dueño del entorno
+    if (userId !== entornoUsuarioId) {
+      return res.status(403).json({ 
+        error: 'Acceso denegado. Solo puedes editar tus propios entornos' 
+      });
+    }
+
+    // Si es el dueño, permitir acceso
+    next();
+  } catch (error) {
+    console.error('Error verificando propiedad del entorno:', error.message);
+    return res.status(500).json({ 
+      error: 'Error interno del servidor' 
+    });
+  }
+};
+
 module.exports = {
   authenticateToken,
   requireAdmin,
-  optionalAuth
+  optionalAuth,
+  requireOwnerOrAdmin
 };
