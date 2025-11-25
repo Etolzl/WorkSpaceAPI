@@ -97,11 +97,33 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Conexión exitosa a MongoDB'))
   .catch((error) => console.error('Error conectando a MongoDB:', error));
 
-// Configurar CORS con opciones más restrictivas
+// Configurar CORS con múltiples orígenes permitidos
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://work-space-gamma-umber.vercel.app',
+  // Agregar otros orígenes desde variables de entorno si existen
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+  // Permitir cualquier subdominio de vercel.app si es necesario
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como mobile apps, Postman, o requests del mismo servidor)
+    if (!origin) return callback(null, true);
+    
+    // Verificar si el origen está en la lista de permitidos
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      // En desarrollo, mostrar un warning pero permitir (opcional)
+      // En producción, deberías rechazar orígenes no permitidos
+      console.warn(`⚠️  Origen no permitido intentando acceder: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
